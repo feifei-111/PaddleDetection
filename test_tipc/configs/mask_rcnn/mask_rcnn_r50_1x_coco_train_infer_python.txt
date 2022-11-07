@@ -17,7 +17,7 @@ norm_train:tools/train.py -c configs/mask_rcnn/mask_rcnn_r50_1x_coco.yml -o
 pact_train:tools/train.py -c configs/mask_rcnn/mask_rcnn_r50_1x_coco.yml --slim_config _template_pact -o
 fpgm_train:tools/train.py -c configs/mask_rcnn/mask_rcnn_r50_1x_coco.yml --slim_config _template_fpgm -o
 distill_train:null
-null:null
+to_static_train:--to_static
 null:null
 ##
 ===========================eval_params===========================

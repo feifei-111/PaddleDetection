@@ -59,6 +59,18 @@ __all__ = ['Trainer']
 
 MOT_ARCH = ['DeepSORT', 'JDE', 'FairMOT', 'ByteTrack']
 
+from paddle.jit import to_static
+from paddle.static import InputSpec
+
+def apply_to_static(config, model):
+    support_to_static = config.get('to_static', False)
+    if support_to_static:
+        specs = None
+        model = to_static(model, input_spec=specs)
+        logger.info("Successfully to apply @to_static with specs: {}".format(
+            specs))
+    return model
+
 
 class Trainer(object):
     def __init__(self, cfg, mode='train'):
@@ -409,6 +421,8 @@ class Trainer(object):
             self.cfg['EvalDataset'] = self.cfg.EvalDataset = create(
                 "EvalDataset")()
 
+        # set @to_static for benchmark, skip this by default.
+        apply_to_static(self.cfg, self.model)
         model = self.model
         sync_bn = (getattr(self.cfg, 'norm_type', None) == 'sync_bn' and
                    (self.cfg.use_gpu or self.cfg.use_mlu) and self._nranks > 1)
