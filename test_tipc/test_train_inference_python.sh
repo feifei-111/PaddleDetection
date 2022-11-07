@@ -237,6 +237,7 @@ else
         for autocast in ${autocast_list[*]}; do
             for trainer in ${trainer_list[*]}; do
                 flag_quant=False
+                set_to_static=""
                 if [ ${trainer} = "${norm_key}" ]; then
                     run_train=${norm_trainer}
                     run_export=${norm_export}
@@ -254,8 +255,9 @@ else
                 # but append "-o Global.to_static=True" for config
                 # to trigger "apply_to_static" logic in 'engine.py'
                 elif [ ${trainer} = "${to_static_key}" ]; then
-                    run_train="${norm_trainer}  ${to_static_trainer}"
+                    run_train=${norm_trainer}
                     run_export=${norm_export}
+                    set_to_static=${to_static_trainer}
                 elif [ ${trainer} = "${trainer_key2}" ]; then
                     run_train=${trainer_value2}
                     run_export=${export_value2}
@@ -292,9 +294,9 @@ else
                 set_save_model=$(func_set_params "${save_model_key}" "${save_log}")
                 nodes="1"
                 if [ ${#gpu} -le 2 ];then  # train with cpu or single gpu
-                    cmd="${python} ${run_train} LearningRate.base_lr=0.0001 log_iter=1 ${set_use_gpu} ${set_save_model} ${set_epoch} ${set_pretrain} ${set_batchsize} ${set_filename} ${set_shuffle} ${set_amp_level} ${set_enable_ce} ${set_autocast} ${set_train_params1}"
+                    cmd="${python} ${run_train} LearningRate.base_lr=0.0001 log_iter=1 ${set_use_gpu} ${set_save_model} ${set_epoch} ${set_pretrain} ${set_batchsize} ${set_filename} ${set_shuffle} ${set_amp_level} ${set_enable_ce} ${set_autocast} ${set_train_params1} ${set_to_static}"
                 elif [ ${#ips} -le 15 ];then  # train with multi-gpu
-                    cmd="${python} -m paddle.distributed.launch --gpus=${gpu} ${run_train} log_iter=1 ${set_use_gpu} ${set_save_model} ${set_epoch} ${set_pretrain} ${set_batchsize} ${set_filename} ${set_shuffle} ${set_amp_level} ${set_enable_ce} ${set_autocast} ${set_train_params1}"
+                    cmd="${python} -m paddle.distributed.launch --gpus=${gpu} ${run_train} log_iter=1 ${set_use_gpu} ${set_save_model} ${set_epoch} ${set_pretrain} ${set_batchsize} ${set_filename} ${set_shuffle} ${set_amp_level} ${set_enable_ce} ${set_autocast} ${set_train_params1} ${set_to_static}"
                 else     # train with multi-machine
                     IFS=","
                     ips_array=(${ips})
@@ -302,7 +304,7 @@ else
                     save_log="${LOG_PATH}/${trainer}_gpus_${gpu}_autocast_${autocast}_nodes_${nodes}"
                     IFS="|"
                     set_save_model=$(func_set_params "${save_model_key}" "${save_log}")
-                    cmd="${python} -m paddle.distributed.launch --ips=${ips} --gpus=${gpu} ${run_train} log_iter=1 ${set_use_gpu} ${set_save_model} ${set_epoch} ${set_pretrain} ${set_batchsize} ${set_filename} ${set_shuffle} ${set_amp_level} ${set_enable_ce} ${set_autocast} ${set_train_params1}"
+                    cmd="${python} -m paddle.distributed.launch --ips=${ips} --gpus=${gpu} ${run_train} log_iter=1 ${set_use_gpu} ${set_save_model} ${set_epoch} ${set_pretrain} ${set_batchsize} ${set_filename} ${set_shuffle} ${set_amp_level} ${set_enable_ce} ${set_autocast} ${set_train_params1} ${set_to_static}"
                 fi
                 # run train
                 train_log_path="${LOG_PATH}/${trainer}_gpus_${gpu}_autocast_${autocast}_nodes_${nodes}.log"
