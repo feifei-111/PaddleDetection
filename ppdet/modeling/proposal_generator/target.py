@@ -327,7 +327,7 @@ def rasterize_polygons_within_box(poly, box, resolution):
 
 def generate_mask_target(gt_segms, rois, labels_int32, sampled_gt_inds,
                          num_classes, resolution):
-我    mask_rois = []
+    mask_rois = []
     mask_rois_num = []
     tgt_masks = []
     tgt_classes = []
