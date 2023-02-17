@@ -152,7 +152,9 @@ def subsample_labels(labels,
     # randomly select positive and negative examples
 
     negative = negative.cast('int32').flatten()
-    bg_perm = paddle.randperm(negative.numel(), dtype='int32')
+    print(paddle.shape(negative)) 
+    bg_perm = paddle.arange(0, negative.numel(), dtype='int32')
+    # bg_perm = paddle.randperm(negative.numel(), dtype='int32')
     bg_perm = paddle.slice(bg_perm, axes=[0], starts=[0], ends=[bg_num])
     if use_random:
         bg_inds = paddle.gather(negative, bg_perm)
@@ -163,7 +165,8 @@ def subsample_labels(labels,
         return fg_inds, bg_inds
 
     positive = positive.cast('int32').flatten()
-    fg_perm = paddle.randperm(positive.numel(), dtype='int32')
+    fg_perm = paddle.arange(0, positive.numel(), dtype='int32')
+    # fg_perm = paddle.randperm(positive.numel(), dtype='int32')
     fg_perm = paddle.slice(fg_perm, axes=[0], starts=[0], ends=[fg_num])
     if use_random:
         fg_inds = paddle.gather(positive, fg_perm)
@@ -200,9 +203,9 @@ def generate_proposal_target(rpn_rois,
     fg_thresh = cascade_iou if is_cascade else fg_thresh
     bg_thresh = cascade_iou if is_cascade else bg_thresh
     for i, rpn_roi in enumerate(rpn_rois):
-        gt_bbox = gt_boxes[i]
-        is_crowd_i = is_crowd[i] if is_crowd else None
-        gt_class = paddle.squeeze(gt_classes[i], axis=-1)
+        gt_bbox = paddle.stack(gt_boxes)[i]
+        is_crowd_i = paddle.stack(is_crowd)[i] if is_crowd else None
+        gt_class = paddle.squeeze(paddle.stack(gt_classes)[i], axis=-1)
 
         # Concat RoIs and gt boxes except cascade rcnn or none gt
         if add_gt_as_proposals and gt_bbox.shape[0] > 0:
@@ -324,7 +327,7 @@ def rasterize_polygons_within_box(poly, box, resolution):
 
 def generate_mask_target(gt_segms, rois, labels_int32, sampled_gt_inds,
                          num_classes, resolution):
-    mask_rois = []
+我    mask_rois = []
     mask_rois_num = []
     tgt_masks = []
     tgt_classes = []
@@ -349,7 +352,9 @@ def generate_mask_target(gt_segms, rois, labels_int32, sampled_gt_inds,
         # Copy the foreground roi to cpu
         # to generate mask target with ground-truth
         boxes = fg_rois.numpy()
-        gt_segms_per_im = gt_segms[k]
+        breakpoint()
+        gt_segms_per_im = paddle.tensor.create_array("float32", gt_segms)[k]
+        # gt_segms_per_im = paddle.tensor.create_array(dtype = "float32", initialized_list=gt_segms)[k]
 
         new_segm = []
         inds_per_im = inds_per_im.numpy()

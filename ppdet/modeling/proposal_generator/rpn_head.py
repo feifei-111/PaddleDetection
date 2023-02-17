@@ -293,19 +293,21 @@ class RPNHead(nn.Layer):
             loss_rpn_cls = F.binary_cross_entropy_with_logits(
                 logit=score_pred, label=score_label, reduction="sum")
 
+
         # reg loss
         if pos_ind.shape[0] == 0:
             loss_rpn_reg = paddle.zeros([1], dtype='float32')
         else:
+            # breakpoint()
             loc_pred = paddle.gather(deltas, pos_ind)
-            loc_tgt = paddle.concat(loc_tgt)
-            loc_tgt = paddle.gather(loc_tgt, pos_ind)
-            loc_tgt.stop_gradient = True
+            loc_tgt_tensor = paddle.concat(loc_tgt)
+            loc_tgt_tensor = paddle.gather(loc_tgt_tensor, pos_ind)
+            loc_tgt_tensor.stop_gradient = True
 
             if self.loss_rpn_bbox is None:
-                loss_rpn_reg = paddle.abs(loc_pred - loc_tgt).sum()
+                loss_rpn_reg = paddle.abs(loc_pred - loc_tgt_tensor).sum()
             else:
-                loss_rpn_reg = self.loss_rpn_bbox(loc_pred, loc_tgt).sum()
+                loss_rpn_reg = self.loss_rpn_bbox(loc_pred, loc_tgt_tensor).sum()
 
         return {
             'loss_rpn_cls': loss_rpn_cls / norm,

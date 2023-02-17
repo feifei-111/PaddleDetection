@@ -327,11 +327,14 @@ class BBoxHead(nn.Layer):
         tgt_labels = paddle.concat(tgt_labels) if len(
             tgt_labels) > 1 else tgt_labels[0]
         valid_inds = paddle.nonzero(tgt_labels >= 0).flatten()
+        
+        tgt_labels.stop_gradient = True
+        tgt_labels = tgt_labels.cast('int64')
+
         if valid_inds.shape[0] == 0:
+            loss_bbox = loss_bbox
             loss_bbox[cls_name] = paddle.zeros([1], dtype='float32')
         else:
-            tgt_labels = tgt_labels.cast('int64')
-            tgt_labels.stop_gradient = True
 
             if not loss_normalize_pos:
                 loss_bbox_cls = F.cross_entropy(
@@ -350,8 +353,8 @@ class BBoxHead(nn.Layer):
         fg_inds = paddle.nonzero(
             paddle.logical_and(tgt_labels >= 0, tgt_labels <
                                self.num_classes)).flatten()
-
         if fg_inds.numel() == 0:
+            loss_bbox = loss_bbox
             loss_bbox[reg_name] = paddle.zeros([1], dtype='float32')
             return loss_bbox
 
